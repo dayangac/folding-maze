@@ -87,7 +87,7 @@ button:hover {
 .gui {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: minmax(220px, 38vh) min-content auto;
+  grid-template-rows: minmax(260px, 46vh) min-content auto;
   gap: 0.6rem 1rem;
 }
 
@@ -103,9 +103,40 @@ button:hover {
 }
 
 #d3,
-#front3 {
+#front3,
+#fold {
   width: 100%;
   height: 100%;
+}
+
+#fold iframe {
+  width: 100%;
+  height: 100%;
+  border: 1px solid var(--rule);
+  background: #fff;
+}
+
+.view-switch {
+  margin-left: 0.8rem;
+  white-space: nowrap;
+}
+
+.view-switch button {
+  border-radius: 0;
+  margin-left: -1px;
+}
+
+.view-switch button:first-of-type {
+  border-radius: 4px 0 0 4px;
+}
+
+.view-switch button:last-of-type {
+  border-radius: 0 4px 4px 0;
+}
+
+.view-switch button[aria-pressed='true'] {
+  background: #1d1c18;
+  color: #faf8f2;
 }
 
 #d3 {

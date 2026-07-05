@@ -1,4 +1,5 @@
 import './style.css';
+import { cpToFOLD } from './cp/fold';
 import { generateCP } from './cp/generate';
 import { cpToSVG } from './cp/svg';
 import { textToMaze } from './maze/font';
@@ -20,18 +21,21 @@ function el<T extends HTMLElement>(id: string): T {
 const mazeEl = el<HTMLDivElement>('maze');
 const d3El = el<HTMLDivElement>('d3');
 const front3El = el<HTMLDivElement>('front3');
+const foldEl = el<HTMLDivElement>('fold');
 const cpEl = el<HTMLDivElement>('cp');
 const textEl = el<HTMLTextAreaElement>('text');
 const lock0El = el<HTMLInputElement>('lock0');
-const frontEl = el<HTMLInputElement>('front');
 const nxEl = el<HTMLSpanElement>('nx');
 const nyEl = el<HTMLSpanElement>('ny');
+
+type View = '3d' | 'front' | 'fold';
 
 const state = {
   maze: createMaze(6, 5),
   mazeIsText: false,
   angles: { ...RESET_ANGLES },
   mathOpen: false,
+  view: '3d' as View,
 };
 
 // --- restore state from the URL hash (#maze=...&text=...&lock0=1&front=1) ---
@@ -51,7 +55,9 @@ const state = {
     if (m) state.maze = m;
   }
   lock0El.checked = params.get('lock0') === '1';
-  frontEl.checked = params.get('front') === '1';
+  const view = params.get('view');
+  if (view === 'front' || view === 'fold') state.view = view;
+  else if (params.get('front') === '1') state.view = 'front'; // legacy links
   state.mathOpen = params.get('math') === '1';
 }
 
@@ -60,24 +66,74 @@ function updateHash(): void {
   if (state.mazeIsText) params.set('text', textEl.value);
   else params.set('maze', flattenMaze(state.maze));
   if (lock0El.checked) params.set('lock0', '1');
-  if (frontEl.checked) params.set('front', '1');
+  if (state.view !== '3d') params.set('view', state.view);
   if (state.mathOpen) params.set('math', '1');
   history.replaceState(null, '', `#${params.toString()}`);
 }
 
 let currentCP = '';
 
-function render3D(): void {
-  d3El.style.display = frontEl.checked ? 'none' : '';
-  front3El.style.display = frontEl.checked ? '' : 'none';
-  if (frontEl.checked) {
+// --- embedded folding simulation (Origami Simulator by Amanda Ghassaei) ---
+// The iframe is created lazily the first time the Fold view is opened. Once
+// the simulator posts its 'ready' handshake, the current crease pattern is
+// sent (and re-sent on every maze change) with fold angles encoded as line
+// opacity — the same protocol the original app uses in a popup.
+let simFrame: HTMLIFrameElement | null = null;
+let simReady = false;
+let simLastSent = '';
+
+function sendToSimulator(): void {
+  if (!simFrame?.contentWindow || !simReady) return;
+  const svg = cpToSVG(generateCP(state.maze, lock0El.checked), 'simulator');
+  if (svg === simLastSent) return;
+  simLastSent = svg;
+  simFrame.contentWindow.postMessage(
+    { op: 'importSVG', svg, vertTol: 0.1, filename: 'maze.svg' },
+    'https://origamisimulator.org',
+  );
+}
+
+window.addEventListener('message', (event) => {
+  const data = event.data as { from?: string; status?: string } | undefined;
+  if (data && data.from === 'OrigamiSimulator' && data.status === 'ready') {
+    simReady = true;
+    sendToSimulator();
+  }
+});
+
+function ensureSimulator(): void {
+  if (simFrame) return;
+  simFrame = document.createElement('iframe');
+  simFrame.src = 'https://origamisimulator.org/?model=';
+  simFrame.title = 'Origami Simulator';
+  simFrame.allow = 'fullscreen';
+  foldEl.appendChild(simFrame);
+}
+
+function renderRightPane(): void {
+  d3El.style.display = state.view === '3d' ? '' : 'none';
+  front3El.style.display = state.view === 'front' ? '' : 'none';
+  foldEl.style.display = state.view === 'fold' ? '' : 'none';
+  if (state.view === 'front') {
     front3El.replaceChildren(renderFrontView(state.maze));
+  } else if (state.view === 'fold') {
+    ensureSimulator();
+    sendToSimulator();
   } else {
     const box = d3El.getBoundingClientRect();
     d3El.replaceChildren(
       renderIso3D(state.maze, state.angles, Math.max(box.width, 100), Math.max(box.height, 100)),
     );
   }
+}
+
+function setView(view: View): void {
+  state.view = view;
+  for (const id of ['view-3d', 'view-front', 'view-fold'] as const) {
+    el(id).setAttribute('aria-pressed', String(id === `view-${view}`));
+  }
+  renderRightPane();
+  updateHash();
 }
 
 function renderAll(): void {
@@ -91,7 +147,7 @@ function renderAll(): void {
       renderAll();
     }),
   );
-  render3D();
+  renderRightPane();
   currentCP = cpToSVG(generateCP(state.maze, lock0El.checked));
   cpEl.innerHTML = currentCP;
   updateHash();
@@ -141,20 +197,19 @@ textEl.addEventListener('input', () => {
 });
 
 lock0El.addEventListener('change', renderAll);
-frontEl.addEventListener('change', () => {
-  render3D();
-  updateHash();
-});
+el('view-3d').addEventListener('click', () => setView('3d'));
+el('view-front').addEventListener('click', () => setView('front'));
+el('view-fold').addEventListener('click', () => setView('fold'));
 
 // --- 3D view controls ---
 el('d3reset').addEventListener('click', () => {
   state.angles = { ...RESET_ANGLES };
-  render3D();
+  renderRightPane();
 });
 const nudge = (dy: number, dx: number) => () => {
   state.angles.yang += dy;
   state.angles.xang += dx;
-  render3D();
+  renderRightPane();
 };
 el('d3-5+0').addEventListener('click', nudge(-5, 0));
 el('d3+5+0').addEventListener('click', nudge(5, 0));
@@ -172,7 +227,7 @@ d3El.addEventListener('pointerdown', (event) => {
   const move = (ev: PointerEvent) => {
     state.angles.xang = start.xang + (ev.screenY - startY);
     state.angles.yang = start.yang + (ev.screenX - startX);
-    render3D();
+    renderRightPane();
   };
   const up = () => {
     d3El.classList.remove('dragging');
@@ -185,56 +240,25 @@ d3El.addEventListener('pointerdown', (event) => {
   d3El.addEventListener('pointercancel', up);
 });
 
-window.addEventListener('resize', render3D);
+window.addEventListener('resize', renderRightPane);
 
-// --- folding simulation (Origami Simulator by Amanda Ghassaei) ---
-// Same handshake as the original app: open origamisimulator.org in a named
-// window, wait for its 'ready' message, then post the crease pattern with
-// fold angles encoded as line opacity.
-let simulator: Window | null = null;
-let simulatorReady = false;
-let onSimulatorReady: (() => void) | null = null;
-
-window.addEventListener('message', (event) => {
-  const data = event.data as { from?: string; status?: string } | undefined;
-  if (data && data.from === 'OrigamiSimulator' && data.status === 'ready') {
-    simulatorReady = true;
-    onSimulatorReady?.();
-    onSimulatorReady = null;
-  }
-});
-
-el('simulate').addEventListener('click', () => {
-  if (simulator && !simulator.closed) {
-    simulator.focus();
-  } else {
-    simulatorReady = false;
-    simulator = window.open('https://origamisimulator.org/?model=', 'simulator');
-  }
-  const send = () => {
-    simulator?.postMessage(
-      {
-        op: 'importSVG',
-        svg: cpToSVG(generateCP(state.maze, lock0El.checked), 'simulator'),
-        vertTol: 0.1,
-        filename: 'maze-simulate.svg',
-      },
-      '*',
-    );
-  };
-  if (simulatorReady) send();
-  else onSimulatorReady = send;
-});
+el('simulate').addEventListener('click', () => setView('fold'));
 
 // --- downloads ---
 el('downloadCP').addEventListener('click', () => downloadText('maze-cp.svg', currentCP));
+el('downloadFOLD').addEventListener('click', () =>
+  downloadText('maze.fold', cpToFOLD(generateCP(state.maze, lock0El.checked)), 'application/json'),
+);
 el('downloadMaze').addEventListener('click', () => {
   const svg = mazeEl.querySelector('svg');
   if (svg) downloadText('maze.svg', svgElementToString(svg));
 });
 el('download3D').addEventListener('click', () => {
-  const svg = (frontEl.checked ? front3El : d3El).querySelector('svg');
-  if (svg) downloadText('maze-3d.svg', svgElementToString(svg));
+  // In the Fold view there is no local SVG; fall back to a fresh 3D render.
+  const svg =
+    (state.view === 'front' ? front3El : d3El).querySelector('svg') ??
+    renderIso3D(state.maze, state.angles, 800, 600);
+  downloadText('maze-3d.svg', svgElementToString(svg));
 });
 
 // --- "How the math works" drawer ---
@@ -258,4 +282,5 @@ window.addEventListener('keydown', (event) => {
 
 renderGadgetLegend(el('gadget-legend'));
 renderAll();
+setView(state.view); // sync the switcher buttons with hash-restored state
 if (state.mathOpen) setMathOpen(true);

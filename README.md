@@ -32,6 +32,12 @@ time. With wall height h = 1, the paper is only 3× the maze footprint.
 Red lines are mountain folds, blue are valley folds; thick lines fold 180°,
 thin lines fold 90°.
 
+Extras: an embedded fold simulation (the "Fold" view / "Simulate folding"
+button, powered by [Origami Simulator](https://origamisimulator.org/) via its
+postMessage API) and crease-pattern export in the
+[FOLD format](https://github.com/edemaine/fold) (planarized mesh with
+mountain/valley assignments and fold angles), alongside plain SVG downloads.
+
 ## Development
 
 ```sh

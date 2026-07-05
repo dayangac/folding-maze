@@ -37,6 +37,7 @@
       <div class="drawing noprint">
         <div id="d3"></div>
         <div id="front3" style="display: none"></div>
+        <div id="fold" style="display: none"></div>
       </div>
       <div class="controls noprint">
         Resize maze:
@@ -51,21 +52,28 @@
         <button id="d3+5+0">&rarr;</button>
         <button id="d3+0-5">&uarr;</button>
         <button id="d3+0+5">&darr;</button>
-        <label><input type="checkbox" id="front" /> Front view</label>
+        <span class="view-switch" role="group" aria-label="Right pane view">
+          <button id="view-3d" aria-pressed="true">3D</button>
+          <button id="view-front" aria-pressed="false">Front</button>
+          <button id="view-fold" aria-pressed="false" title="Fold simulation via origamisimulator.org">Fold</button>
+        </span>
       </div>
       <div id="cp" class="drawing"></div>
     </div>
 
     <div class="options noprint">
-      <button id="simulate" title="Watch this crease pattern fold in Origami Simulator (opens origamisimulator.org)">
+      <button id="simulate" title="Watch this crease pattern fold (embedded Origami Simulator)">
         Simulate folding
       </button>
       <label><input type="checkbox" id="lock0" /> Lock degree-0 corners</label>
       <span class="downloads">
-        Download SVG:
-        <button id="downloadMaze">Maze</button>
-        <button id="download3D">3D</button>
-        <button id="downloadCP">Crease Pattern</button>
+        Download:
+        <button id="downloadMaze" title="Maze as SVG">Maze</button>
+        <button id="download3D" title="3D view as SVG">3D</button>
+        <button id="downloadCP" title="Crease pattern as SVG">Crease Pattern</button>
+        <button id="downloadFOLD" title="Crease pattern in the FOLD format (Origami Simulator, Flat-Folder, ORIPA, …)">
+          FOLD
+        </button>
       </span>
     </div>
 
