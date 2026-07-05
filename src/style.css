@@ -136,6 +136,13 @@ button:hover {
   padding-top: 0.8rem;
 }
 
+/* The whole crease pattern always fits in one view: natural aspect-ratio
+   height for wide mazes, capped at 82vh (letterboxed) for tall ones. */
+#cp svg {
+  height: auto;
+  max-height: 82vh;
+}
+
 .options {
   display: flex;
   align-items: center;
@@ -281,6 +288,11 @@ button:hover {
     border: none;
     padding: 0;
     width: 100%;
+    height: auto;
+  }
+
+  #cp svg {
+    height: auto;
   }
 }
 

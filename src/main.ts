@@ -187,6 +187,45 @@ d3El.addEventListener('pointerdown', (event) => {
 
 window.addEventListener('resize', render3D);
 
+// --- folding simulation (Origami Simulator by Amanda Ghassaei) ---
+// Same handshake as the original app: open origamisimulator.org in a named
+// window, wait for its 'ready' message, then post the crease pattern with
+// fold angles encoded as line opacity.
+let simulator: Window | null = null;
+let simulatorReady = false;
+let onSimulatorReady: (() => void) | null = null;
+
+window.addEventListener('message', (event) => {
+  const data = event.data as { from?: string; status?: string } | undefined;
+  if (data && data.from === 'OrigamiSimulator' && data.status === 'ready') {
+    simulatorReady = true;
+    onSimulatorReady?.();
+    onSimulatorReady = null;
+  }
+});
+
+el('simulate').addEventListener('click', () => {
+  if (simulator && !simulator.closed) {
+    simulator.focus();
+  } else {
+    simulatorReady = false;
+    simulator = window.open('https://origamisimulator.org/?model=', 'simulator');
+  }
+  const send = () => {
+    simulator?.postMessage(
+      {
+        op: 'importSVG',
+        svg: cpToSVG(generateCP(state.maze, lock0El.checked), 'simulator'),
+        vertTol: 0.1,
+        filename: 'maze-simulate.svg',
+      },
+      '*',
+    );
+  };
+  if (simulatorReady) send();
+  else onSimulatorReady = send;
+});
+
 // --- downloads ---
 el('downloadCP').addEventListener('click', () => downloadText('maze-cp.svg', currentCP));
 el('downloadMaze').addEventListener('click', () => {

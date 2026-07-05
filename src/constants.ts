@@ -20,3 +20,12 @@ export const CP_STYLES = `line, polygon { stroke-linecap: round; stroke-linejoin
 .mountain.f180 { stroke: #ff6060; stroke-width: ${MEDIUM}; }
 .boundary { stroke: black; stroke-width: ${THICK}; fill: none; }
 `;
+
+// Origami Simulator convention: pure red/blue lines whose opacity encodes the
+// target fold angle (0.5 -> 90°, 1 -> 180°).
+export const CP_SIM_STYLES = `.valley { stroke: #00f; }
+.mountain { stroke: #f00; }
+.f90 { stroke-width: ${THIN}; opacity: 0.5; }
+.f180 { stroke-width: ${MEDIUM}; opacity: 1; }
+.boundary { stroke: black; stroke-width: ${THICK}; fill: none; }
+`;
