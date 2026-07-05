@@ -38,7 +38,8 @@ describe('gadget tables', () => {
   });
 
   it('canonicalize removes the duplicated source segments', () => {
-    expect(canonicalize(TEE)).toHaveLength(26);
+    // The source duplicates one crease per s-sign: 27 - 2 = 25 unique.
+    expect(canonicalize(TEE)).toHaveLength(25);
     expect(canonicalize(DEG0_LOCKED)).toHaveLength(36);
     expect(canonicalize(STRAIGHT)).toHaveLength(19);
   });

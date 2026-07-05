@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Origami Maze Folder</title>
+  </head>
+  <body>
+    <header class="noprint">
+      <h1>Origami Maze Folder</h1>
+      <p class="byline">
+        Algorithm &amp; gadget designs by
+        <a href="https://erikdemaine.org/">Erik Demaine</a>,
+        <a href="https://martindemaine.org/">Martin Demaine</a>,
+        <a href="https://jasonku.mit.edu/">Jason Ku</a> (2010) —
+        independent TypeScript re-implementation.
+      </p>
+    </header>
+
+    <div class="input-row noprint">
+      <textarea id="text" rows="2" placeholder="Type text to fold&hellip;"></textarea>
+      <div class="gridsize"><span id="nx">6</span> &times; <span id="ny">5</span> grid</div>
+      <button id="clear">Clear maze</button>
+      <button id="random">Random maze</button>
+    </div>
+
+    <div class="gui">
+      <div id="maze" class="drawing noprint"></div>
+      <div class="drawing noprint">
+        <div id="d3"></div>
+        <div id="front3" style="display: none"></div>
+      </div>
+      <div class="controls noprint">
+        Resize maze:
+        <button id="ny-1" title="Remove a row (shift: from the top)">&uarr;</button>
+        <button id="ny+1" title="Add a row (shift: at the top)">&darr;</button>
+        <button id="nx-1" title="Remove a column (shift: from the left)">&larr;</button>
+        <button id="nx+1" title="Add a column (shift: at the left)">&rarr;</button>
+      </div>
+      <div class="controls noprint">
+        <button id="d3reset">Reset view</button>
+        <button id="d3-5+0">&larr;</button>
+        <button id="d3+5+0">&rarr;</button>
+        <button id="d3+0-5">&uarr;</button>
+        <button id="d3+0+5">&darr;</button>
+        <label><input type="checkbox" id="front" /> Front view</label>
+      </div>
+      <div id="cp" class="drawing"></div>
+    </div>
+
+    <div class="options noprint">
+      <b>Options:</b>
+      <label><input type="checkbox" id="lock0" /> Lock degree-0 corners</label>
+      <span class="downloads">
+        Download SVG:
+        <button id="downloadMaze">Maze</button>
+        <button id="download3D">3D</button>
+        <button id="downloadCP">Crease Pattern</button>
+      </span>
+    </div>
+
+    <section class="explainer noprint">
+      <h2>How it works</h2>
+      <p>
+        This is the algorithm from
+        <a href="https://erikdemaine.org/papers/MazeFolding_Origami5/"
+          ><em>Folding Any Orthogonal Maze</em></a
+        >
+        (Demaine, Demaine, Ku). Draw any orthogonal maze — walls on the edges
+        of a grid — and the crease pattern below folds a flat square of paper
+        into that maze: walls of uniform height extruded from a flat floor,
+        using paper only <b>3&times;</b> the maze footprint.
+      </p>
+      <p>
+        The trick is that the crease pattern is a <b>tiling</b>. Each grid
+        vertex gets a local <em>gadget</em> chosen by which of its four
+        incident edges carry walls — only six shapes are needed, up to
+        rotation. Every gadget presents the same interface on each of its
+        four sides: a <em>ridge</em> profile where a wall crosses, a
+        <em>floor</em> profile where none does. Because interfaces always
+        match, any combination of gadgets tiles into a valid, watertight
+        crease pattern, in time linear in the maze size.
+      </p>
+      <div id="gadget-legend" class="gadget-legend"></div>
+      <p>
+        <span class="legend-mountain">Red</span> = mountain fold,
+        <span class="legend-valley">blue</span> = valley fold (printed side
+        up); thin/light lines fold 90&deg;, thick/dark lines fold 180&deg;.
+        Printing this page prints just the crease pattern. Fold all the
+        180&deg; pleats flat first, then open the 90&deg; walls.
+      </p>
+      <p>
+        Modeled on the authors&rsquo; original
+        <a href="https://erikdemaine.org/fonts/maze/">Origami Maze Font</a>
+        web app, whose source defined the reference gadget geometry, and on
+        the companion
+        <a href="https://erikdemaine.org/papers/MazeAlphabet_G4G9/">maze puzzle font</a>
+        used for the text input above.
+      </p>
+    </section>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
