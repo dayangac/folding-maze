@@ -38,8 +38,14 @@ header h1 {
 }
 
 .byline {
-  margin: 0 0 0.4rem;
+  margin: 0 0 0.15rem;
   font-size: 0.95rem;
+}
+
+.byline.reference {
+  font-size: 0.85rem;
+  color: #55524a;
+  margin-bottom: 0.4rem;
 }
 
 .input-row {
