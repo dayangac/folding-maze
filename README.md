@@ -40,6 +40,19 @@ npm test           # vitest
 npm run build      # typecheck + production build into dist/
 ```
 
+## Validation
+
+The crease-pattern generator is validated two ways:
+
+- **Invariants** (`tests/cp.test.ts`): every internal gadget-tile border must
+  present the exact ridge/floor interface profile from the paper, on both
+  sides, for hand-built and random mazes.
+- **Oracle fixtures** (`tests/oracle.test.ts`): `tests/fixtures/*.json` hold
+  segment sets captured by running the *original* app's `draw_cp` (fetched
+  from erikdemaine.org, not stored in this repo) against fixture mazes
+  covering every gadget and rotation. Our output matches segment-for-segment.
+  Regenerate with `tests/oracle-harness.ts` (usage in its header comment).
+
 ## Auto-commit
 
 Commits in this repo are made periodically by `scripts/autocommit.sh` (a
