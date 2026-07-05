@@ -7,14 +7,19 @@
   </head>
   <body>
     <header class="noprint">
-      <h1>Origami Maze Folder</h1>
-      <p class="byline">
-        Algorithm &amp; gadget designs by
-        <a href="https://erikdemaine.org/">Erik Demaine</a>,
-        <a href="https://martindemaine.org/">Martin Demaine</a>,
-        <a href="https://jasonku.mit.edu/">Jason Ku</a> (2010) —
-        independent TypeScript re-implementation.
-      </p>
+      <div>
+        <h1>Origami Maze Folder</h1>
+        <p class="byline">
+          Algorithm &amp; gadget designs by
+          <a href="https://erikdemaine.org/">Erik Demaine</a>,
+          <a href="https://martindemaine.org/">Martin Demaine</a>,
+          <a href="https://jasonku.mit.edu/">Jason Ku</a> (2010) &mdash;
+          re-created by Emre Dayangac (2026).
+        </p>
+      </div>
+      <button id="mathBtn" class="math-btn" aria-controls="mathDrawer" aria-expanded="false">
+        How the math works
+      </button>
     </header>
 
     <div class="input-row noprint">
@@ -59,45 +64,106 @@
       </span>
     </div>
 
-    <section class="explainer noprint">
-      <h2>How it works</h2>
-      <p>
-        This is the algorithm from
-        <a href="https://erikdemaine.org/papers/MazeFolding_Origami5/"
-          ><em>Folding Any Orthogonal Maze</em></a
-        >
-        (Demaine, Demaine, Ku). Draw any orthogonal maze — walls on the edges
-        of a grid — and the crease pattern below folds a flat square of paper
-        into that maze: walls of uniform height extruded from a flat floor,
-        using paper only <b>3&times;</b> the maze footprint.
-      </p>
-      <p>
-        The trick is that the crease pattern is a <b>tiling</b>. Each grid
-        vertex gets a local <em>gadget</em> chosen by which of its four
-        incident edges carry walls — only six shapes are needed, up to
-        rotation. Every gadget presents the same interface on each of its
-        four sides: a <em>ridge</em> profile where a wall crosses, a
-        <em>floor</em> profile where none does. Because interfaces always
-        match, any combination of gadgets tiles into a valid, watertight
-        crease pattern, in time linear in the maze size.
-      </p>
-      <div id="gadget-legend" class="gadget-legend"></div>
-      <p>
-        <span class="legend-mountain">Red</span> = mountain fold,
-        <span class="legend-valley">blue</span> = valley fold (printed side
-        up); thin/light lines fold 90&deg;, thick/dark lines fold 180&deg;.
-        Printing this page prints just the crease pattern. Fold all the
-        180&deg; pleats flat first, then open the 90&deg; walls.
-      </p>
-      <p>
-        Modeled on the authors&rsquo; original
-        <a href="https://erikdemaine.org/fonts/maze/">Origami Maze Font</a>
-        web app, whose source defined the reference gadget geometry, and on
-        the companion
-        <a href="https://erikdemaine.org/papers/MazeAlphabet_G4G9/">maze puzzle font</a>
-        used for the text input above.
-      </p>
-    </section>
+    <div id="drawerBackdrop" class="drawer-backdrop noprint" hidden></div>
+    <aside id="mathDrawer" class="math-drawer noprint" role="dialog" aria-label="How the math works">
+      <div class="drawer-head">
+        <h2>How the math works</h2>
+        <button id="mathClose" class="drawer-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="drawer-body">
+        <p>
+          This app implements
+          <a href="https://erikdemaine.org/papers/MazeFolding_Origami5/"
+            ><em>Folding Any Orthogonal Maze</em></a
+          >
+          (Erik Demaine, Martin Demaine, Jason Ku): draw any orthogonal
+          maze &mdash; walls on the edges of an <i>n</i>&times;<i>n</i> grid
+          &mdash; and a single flat square of paper folds into that maze,
+          with walls of uniform height <i>h</i> extruded from a flat floor.
+        </p>
+
+        <h3>Why the paper is 3&times; the maze</h3>
+        <p>
+          Extruding a zero-thickness wall of height <i>h</i> costs paper that
+          travels up the wall and back down: 2<i>h</i> extra. So each of the
+          <i>n</i>&minus;1 interior grid lines carries a hidden pleat strip of
+          width 2<i>h</i>, and the two boundary lines need only <i>h</i> each
+          (the paper&rsquo;s edge becomes the wall&rsquo;s top rim). Total
+          side length:
+        </p>
+        <p class="math">
+          <i>n</i> + (<i>n</i>&minus;1)&middot;2<i>h</i> + 2&middot;<i>h</i>
+          = (2<i>h</i>+1)&thinsp;<i>n</i>
+        </p>
+        <p>
+          This app fixes <i>h</i> = 1, so the sheet is exactly
+          <b>3<i>n</i> &times; 3<i>n</i></b>. Where a strip crosses a wall
+          edge it folds into the wall (two 90&deg; creases at the base, one
+          180&deg; crease at the ridge top); where it doesn&rsquo;t, it is
+          folded flat and hidden in the floor.
+        </p>
+
+        <h3>Why six gadgets suffice for every maze</h3>
+        <p>
+          Away from grid vertices, a strip is trivial. All the difficulty
+          concentrates where strips cross: the <em>vertex gadget</em>. Only
+          the pattern of walls on the vertex&rsquo;s four incident edges
+          matters &mdash; 2<sup>4</sup> = 16 cases, which reduce to
+          <b>six gadgets up to rotation</b>:
+        </p>
+        <div id="gadget-legend" class="gadget-legend"></div>
+        <p>
+          The key invariant: every gadget presents the <b>same interface</b>
+          on each of its four sides &mdash; a <em>ridge</em> profile where a
+          wall crosses (90&deg; valleys at &plusmn;<i>h</i>, a 180&deg;
+          mountain at the apex) and a <em>floor</em> profile where none does
+          (the flattened pleat). Since any two interfaces of the same kind
+          match, <b>any</b> combination of gadgets tiles into a consistent,
+          watertight crease pattern &mdash; no global constraint solving, so
+          the algorithm runs in time linear in the maze size. (This app
+          unit-tests exactly that invariant on both sides of every tile
+          border.)
+        </p>
+
+        <h3>How close to optimal is 2<i>h</i>+1?</h3>
+        <p>
+          Folding can only shrink intrinsic (along-the-paper) distances. If
+          the maze uses all (<i>n</i>+1)<sup>2</sup> grid points, it has at
+          least (<i>n</i>+1)<sup>2</sup>&minus;1 edges, so some row or column
+          carries about <i>n</i>/2 of them; a straight line across the folded
+          model must climb up and down each of those ridges, giving intrinsic
+          length about <i>n</i>(<i>h</i>+1) + 2<i>h</i>. The flat
+          square&rsquo;s diameter must be at least that, forcing scale factor
+          &ge; (<i>h</i>+1)/&radic;2. So 2<i>h</i>+1 is within a factor of
+          just under 2&radic;2 of optimal &mdash; and within &radic;2
+          whenever some row or column is fully walled.
+        </p>
+
+        <h3>Reading &amp; folding the crease pattern</h3>
+        <p>
+          <span class="legend-mountain">Red</span> = mountain fold,
+          <span class="legend-valley">blue</span> = valley fold (printed side
+          up); thin/light lines fold 90&deg;, thick/dark lines fold
+          180&deg;. Fold all the 180&deg; pleats flat first, then open the
+          90&deg; creases to raise the walls. The folding is
+          <em>watertight</em> (the paper&rsquo;s boundary maps onto the
+          model&rsquo;s boundary), and for <i>h</i> = 1 the number of layers
+          at any point is bounded by a constant. Printing this page prints
+          just the crease pattern.
+        </p>
+
+        <h3>Credits</h3>
+        <p>
+          Algorithm, gadget designs, and the
+          <a href="https://erikdemaine.org/papers/MazeAlphabet_G4G9/">maze puzzle font</a>
+          by Erik Demaine, Martin Demaine, and Jason Ku (2010); modeled on
+          their original
+          <a href="https://erikdemaine.org/fonts/maze/">Origami Maze Font</a>
+          web app, whose source defined the reference gadget geometry.
+          Re-created as a TypeScript web app by Emre Dayangac in 2026.
+        </p>
+      </div>
+    </aside>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

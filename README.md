@@ -5,7 +5,8 @@ generate, or type) an orthogonal maze and get a printable crease pattern that
 folds a flat square of paper into that maze — walls of uniform height
 extruded from a flat floor.
 
-This is a TypeScript re-implementation of the algorithm from:
+Re-created as a TypeScript web app by **Emre Dayangac** (2026), implementing
+the algorithm from:
 
 > Erik D. Demaine, Martin L. Demaine, Jason Ku.
 > **"Folding Any Orthogonal Maze."**

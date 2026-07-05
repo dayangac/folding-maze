@@ -31,6 +31,7 @@ const state = {
   maze: createMaze(6, 5),
   mazeIsText: false,
   angles: { ...RESET_ANGLES },
+  mathOpen: false,
 };
 
 // --- restore state from the URL hash (#maze=...&text=...&lock0=1&front=1) ---
@@ -51,6 +52,7 @@ const state = {
   }
   lock0El.checked = params.get('lock0') === '1';
   frontEl.checked = params.get('front') === '1';
+  state.mathOpen = params.get('math') === '1';
 }
 
 function updateHash(): void {
@@ -59,6 +61,7 @@ function updateHash(): void {
   else params.set('maze', flattenMaze(state.maze));
   if (lock0El.checked) params.set('lock0', '1');
   if (frontEl.checked) params.set('front', '1');
+  if (state.mathOpen) params.set('math', '1');
   history.replaceState(null, '', `#${params.toString()}`);
 }
 
@@ -195,5 +198,25 @@ el('download3D').addEventListener('click', () => {
   if (svg) downloadText('maze-3d.svg', svgElementToString(svg));
 });
 
+// --- "How the math works" drawer ---
+const mathDrawer = el<HTMLElement>('mathDrawer');
+const mathBackdrop = el<HTMLDivElement>('drawerBackdrop');
+const mathBtn = el<HTMLButtonElement>('mathBtn');
+
+function setMathOpen(open: boolean): void {
+  state.mathOpen = open;
+  mathDrawer.classList.toggle('open', open);
+  mathBackdrop.hidden = !open;
+  mathBtn.setAttribute('aria-expanded', String(open));
+  updateHash();
+}
+mathBtn.addEventListener('click', () => setMathOpen(!state.mathOpen));
+el('mathClose').addEventListener('click', () => setMathOpen(false));
+mathBackdrop.addEventListener('click', () => setMathOpen(false));
+window.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && state.mathOpen) setMathOpen(false);
+});
+
 renderGadgetLegend(el('gadget-legend'));
 renderAll();
+if (state.mathOpen) setMathOpen(true);
